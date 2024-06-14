@@ -13,7 +13,8 @@ from PIL import Image, ImageTk
 # Diretório onde os projetos serão armazenados
 projetos_dir = "projetos"
 fusil_filename = "config.fuzil"
-
+verçaodoapp = 444
+redistri = 0
 def escrever_diretorio_projetos(diretorio):
     with open(fusil_filename, "w") as file:
         file.write(diretorio)
@@ -194,6 +195,23 @@ def importar_projeto():
             atualizar_lista_projetos()
             messagebox.showinfo("Sucesso", f"Projeto importado com sucesso com nome {novo_nome_projeto}.\nPor motivos de já ter outro com nomes iguais o projeto foi renomeado.")
 
+def verificar_arquivo():
+    if os.path.isfile("repas.json"):
+        buttonv = tk.Button(root, text="Mais Informações", command=mostrar_mais_informacoes)
+        buttonv.place(x=455,y=414)
+        with open("repas.json", "r") as file:
+            data = json.load(file)
+            
+            return f"Versão não oficial de ©Valdemir modificada por {data['modificador']}"
+    else:
+        return f"Versão {verçaodoapp} compilação oficial - ©Valdemir - dsw injection"
+
+def mostrar_mais_informacoes():
+    with open("repas.json", "r") as file:
+        data = json.load(file)
+       
+    messagebox.showinfo("Sobre essa versão não oficial", f"Versão não oficial de ©Valdemir modificada por {data['modificador']} \nVersão Não oficial {data['versao']}\nEu {data['modificador']} Fiz as seguintes modificações\n>>>> {data['descricao']} \n\n\n\nEssa versão não tem nenhum suporte oficial de ninguém utilize com cautela.")
+
 # Função para carregar um projeto selecionado e exibir os detalhes
 def carregar_projeto():
     projeto_selecionado = lista_projetos.curselection()
@@ -220,6 +238,7 @@ def carregar_projeto():
 root = tk.Tk()
 root.title("DSW - ino for speed - Painel de Controle de Injeção Eletrônica")
 root.resizable(False, False)
+root.geometry("604x434")
 style = ttk.Style()
 style.theme_use('clam')
 root.configure(bg='#f0f0f0')
@@ -267,4 +286,9 @@ def exibir_imagens():
 
     root.after(4000, atualizar_imagem)
 exibir_imagens()
+labelv = tk.Label(root, text=verificar_arquivo())
+labelv.place(x=114,y=414)
+
+
+
 root.after(2444,root.mainloop() )
