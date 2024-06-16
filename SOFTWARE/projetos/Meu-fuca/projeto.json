@@ -1,9 +1,1 @@
-{
-    "Cilindros": 4,
-    "Inje\u00e7\u00e3o": "",
-    "Igni\u00e7\u00e3o": "",
-    "Turbo": "Sim",
-    "RPM M\u00ednima": 500,
-    "RPM M\u00e1xima": 2010,
-    "Padr\u00e3o de Medi\u00e7\u00e3o": "Imperial"
-}
+{"Cilindros": 4, "Inje\u00e7\u00e3o": "", "Igni\u00e7\u00e3o": "", "Turbo": "Sim", "RPM M\u00ednima": 500, "RPM M\u00e1xima": 9648, "Padr\u00e3o de Medi\u00e7\u00e3o": "Imperial", "Porta Serial": "COM9"}

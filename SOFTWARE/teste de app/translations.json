@@ -1,0 +1,11 @@
+{
+    "en": {
+      "welcome_message": "Welcome to my app!",
+      "button_text": "Click me!"
+    },
+    "pt": {
+      "welcome_message": "Bem-vindo ao meu aplicativo!",
+      "button_text": "Clique em mim!"
+    }
+  }
+  

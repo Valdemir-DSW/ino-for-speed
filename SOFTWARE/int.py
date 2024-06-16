@@ -7,13 +7,13 @@ import json
 from tkinter import PhotoImage
 from itertools import cycle
 from PIL import Image, ImageTk
-
-
+import serial.tools.list_ports
+import vol
 
 # Diretório onde os projetos serão armazenados
 projetos_dir = "projetos"
 fusil_filename = "config.fuzil"
-verçaodoapp = 444
+verçaodoapp = "1.0.1"
 redistri = 0
 def escrever_diretorio_projetos(diretorio):
     with open(fusil_filename, "w") as file:
@@ -26,14 +26,25 @@ def verificar_nome_projeto(nome_projeto):
             return True
     return False
 
+def Pesquisar(vid, pid):
+    ports = serial.tools.list_ports.comports()
+    for port, desc, hwid in sorted(ports):
+        if vid in hwid and pid in hwid:
+            return f"Porta encontrada de um firmware oficial:\n{port} - {desc} \n\nSelecione a porta {port} Na caixa de seleção"
+    return "Porta de Algum firmware oficial não encontrada."
 
+def Procurarporta():
+    vid = "4444"
+    pid = "4446"
+    resultado = Pesquisar(vid, pid)
+    messagebox.showinfo("Resultado da busca", resultado)
 def show_splash_screen():
         
         
     roots = tk.Tk()
     roots.overrideredirect(True)
     roots.geometry("+154+144")  # Posição da tela de splash na tela
-    image = PhotoImage(file="splach.png")
+    image = PhotoImage(file="icones/splach.png")
     label = tk.Label(roots, image=image)
     label.pack()
     roots.after(3000,roots.destroy )  # Fechar a tela de splash após 3 segundos
@@ -44,7 +55,9 @@ def validar_dados(nome_projeto, num_cilindros, rpm_min, rpm_max):
     if not nome_projeto:
         messagebox.showerror("Erro de Validação", "O nome do projeto não pode estar vazio.")
         return False
-    
+    if num_cilindros == 7:
+        messagebox.showerror("Erro de Validação", "Número de cilindros não pode ser 7.")
+        return False
     if not (1 <= num_cilindros <= 8):
         messagebox.showerror("Erro de Validação", "Número de cilindros deve estar entre 1 e 8.")
         return False
@@ -58,9 +71,22 @@ def validar_dados(nome_projeto, num_cilindros, rpm_min, rpm_max):
         return False
     
     return True
+def buscar_portas_serial():
+    return [porta.device for porta in serial.tools.list_ports.comports()]
 
-# Função para criar um novo projeto
+def atualizar_portas_serial():
+         porta_combobox['values'] = buscar_portas_serial()
 def criar_projeto():
+    def selecionar_porta_serial():
+        portas = buscar_portas_serial()
+        if portas:
+            global porta_combobox
+            porta_selecionada = tk.StringVar(value=portas[0])
+            porta_combobox = ttk.Combobox(form_projeto, textvariable=porta_selecionada, values=portas)
+            porta_combobox.grid(row=9, column=1, padx=10, pady=5)
+            porta_combobox.current(0)
+            return porta_selecionada
+    
     def salvar_projeto():
         nome_projeto = nome_var.get().strip()
         num_cilindros = cilindros_slider.get()
@@ -75,6 +101,7 @@ def criar_projeto():
             if verificar_nome_projeto(nome_projeto):
                 messagebox.showerror("Erro", "Já existe um projeto com esse nome.")
             else:
+                porta_serial = porta_serial_var.get()
                 projeto = {
                     "Cilindros": num_cilindros,
                     "Injeção": modo_injecao,
@@ -82,7 +109,8 @@ def criar_projeto():
                     "Turbo": turbo,
                     "RPM Mínima": rpm_min,
                     "RPM Máxima": rpm_max,
-                    "Padrão de Medição": padrao_medicao
+                    "Padrão de Medição": padrao_medicao,
+                    "Porta Serial": porta_serial
                 }
                 salvar_projeto_em_arquivo(nome_projeto, projeto)
                 atualizar_lista_projetos()
@@ -91,6 +119,7 @@ def criar_projeto():
     
     form_projeto = tk.Toplevel(root)
     form_projeto.title("Novo Projeto")
+    form_projeto.geometry("304x494+644+100")
     form_projeto.iconbitmap(os.path.abspath("ico.ico"))
     form_projeto.resizable(False,False)
     tk.Label(form_projeto, text="Nome do Projeto:").grid(row=0, column=0, padx=10, pady=5)
@@ -103,12 +132,12 @@ def criar_projeto():
     
     tk.Label(form_projeto, text="Modo de Injeção:").grid(row=2, column=0, padx=10, pady=5)
     injecao_var = tk.StringVar()
-    tk.Entry(form_projeto, textvariable=injecao_var).grid(row=2, column=1, padx=10, pady=5)
+    tk.Entry(form_projeto, textvariable=injecao_var,state="disabled").grid(row=2, column=1, padx=10, pady=5)
     
     tk.Label(form_projeto, text="Modo de Ignição:").grid(row=3, column=0, padx=10, pady=5)
     ignicao_var = tk.StringVar()
-    tk.Entry(form_projeto, textvariable=ignicao_var).grid(row=3, column=1, padx=10, pady=5)
-    
+    tk.Entry(form_projeto, textvariable=ignicao_var,state="disabled").grid(row=3, column=1, padx=10, pady=5)
+   
     tk.Label(form_projeto, text="Turbo (Sim/Não):").grid(row=4, column=0, padx=10, pady=5)
     turbo_var = tk.StringVar()
     turbo_combobox = ttk.Combobox(form_projeto, textvariable=turbo_var, values=["Sim", "Não"])
@@ -122,14 +151,24 @@ def criar_projeto():
     tk.Label(form_projeto, text="RPM Máxima:").grid(row=6, column=0, padx=10, pady=5)
     rpm_max_slider = tk.Scale(form_projeto, from_=2010, to=10000, orient=tk.HORIZONTAL)
     rpm_max_slider.grid(row=6, column=1, padx=10, pady=5)
-    
     tk.Label(form_projeto, text="Padrão de Medição:").grid(row=7, column=0, padx=10, pady=5)
     medicao_var = tk.StringVar()
     medicao_combobox = ttk.Combobox(form_projeto, textvariable=medicao_var, values=["Imperial", "Métrico"])
     medicao_combobox.grid(row=7, column=1, padx=10, pady=5)
     medicao_combobox.current(0)
+    tk.Label(form_projeto, text="-------------------------").grid(row=8, column=0, padx=10, pady=5)
+    tk.Label(form_projeto, text="-------------------------").grid(row=8, column=1, padx=10, pady=5)
+    porta_serial_var = selecionar_porta_serial()
+    if porta_serial_var:
+        tk.Label(form_projeto, text="Porta Serial:").grid(row=9, column=0, padx=10, pady=5)
+        #tk.Entry(form_projeto, textvariable=porta_serial_var).grid(row=9, column=1, padx=10, pady=5) 
     
-    tk.Button(form_projeto, text="Salvar", command=salvar_projeto).grid(row=8, columnspan=2, pady=10)
+    tk.Button(form_projeto, text="Procurar porta serial", command=Procurarporta).grid(row=10, column=0, pady=10)
+    tk.Button(form_projeto, text="Atualizar lista", command=atualizar_portas_serial).grid(row=10, column=1, pady=10)   
+    tk.Label(form_projeto, text="-------------------------").grid(row=11, column=0, padx=10, pady=5)
+    tk.Label(form_projeto, text="-------------------------").grid(row=11, column=1, padx=10, pady=5) 
+    tk.Button(form_projeto, text="Salvar | Criar novo projeto", command=salvar_projeto).grid(row=12, columnspan=2, pady=10)
+    
 
 # Função para salvar o projeto em um arquivo JSON
 def salvar_projeto_em_arquivo(nome_projeto, projeto):
@@ -149,7 +188,8 @@ def carregar_projetos_existentes():
     projetos = []
     for nome_projeto in os.listdir(projetos_dir):
         projeto_path = os.path.join(projetos_dir, nome_projeto, "projeto.json")
-        escrever_diretorio_projetos(projeto_path)
+        intint = os.path.abspath(os.getcwd())
+        escrever_diretorio_projetos(f"{intint}{projeto_path}projeto.json")
         if os.path.isfile(projeto_path):
             with open(projeto_path, "r") as file:
                 projeto = json.load(file)
@@ -220,19 +260,16 @@ def carregar_projeto():
         return
     index = projeto_selecionado[0]
     projeto = carregar_projetos_existentes()[index]
-    escrever_diretorio_projetos(os.path.join(projetos_dir, projeto["nome"]))
+    intint = os.path.abspath(os.getcwd())
+    intout = "projeto.json"
+    escrever_diretorio_projetos(os.path.join(intint,projetos_dir, projeto["nome"],intout))
+    #projeto_path = os.path.join(projetos_dir, projeto_selecionado + ".json")
+    root.destroy()
+    vol.run_vol_module()
     
-    detalhes = (
-        f"Nome do Projeto: {projeto['nome']}\n"
-        f"Número de Cilindros: {projeto['Cilindros']}\n"
-        f"Modo de Injeção: {projeto['Injeção']}\n"
-        f"Modo de Ignição: {projeto['Ignição']}\n"
-        f"Turbo: {projeto['Turbo']}\n"
-        f"RPM Mínima: {projeto['RPM Mínima']}\n"
-        f"RPM Máxima: {projeto['RPM Máxima']}\n"
-        f"Padrão de Medição: {projeto['Padrão de Medição']}"
-    )
-    messagebox.showinfo("Detalhes do Projeto", detalhes)
+    
+    
+    
 
 # Configuração da janela principal
 root = tk.Tk()
