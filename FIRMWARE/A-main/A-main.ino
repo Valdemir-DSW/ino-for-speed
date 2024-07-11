@@ -1,17 +1,29 @@
+#include <EEPROM.h>
 
+ void setup(){
 
-
-
-void setup(void){
- 
  Serial.begin(115200);
  setup_fon();
  loadFromEEPROM();
+ bobinasetup();
+ 
+ setupbico();
+ 
 
 }
 
 
-void loop(void){
+void loop(){
+  loopbobina();
+  loopbico();
 loop_fon();
-serialreceiver();
+tpshande();
+sensorBATT();
+sensorTEMPagua();
+lambdamonit();
+  if (Serial.available() > 0) {
+    serialreceiver();
+  }else{
+    semde_data();
+  }
 }

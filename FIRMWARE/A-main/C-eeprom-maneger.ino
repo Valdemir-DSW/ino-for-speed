@@ -1,6 +1,6 @@
 void saveToEEPROM() {
-//  EEPROM.write(0, alcanse);
- // EEPROM.write(1, Sensibilidade);
+ EEPROM.write(0, tpsmin);
+ EEPROM.write(1, tpsmax);
  // EEPROM.write(2, botao);
  // EEPROM.write(3, digital);
  // EEPROM.write(4, variable);
@@ -11,8 +11,8 @@ void saveToEEPROM() {
 }
 
 void loadFromEEPROM() {
-//  alcanse = EEPROM.read(0);
-//  Sensibilidade = EEPROM.read(1);
+  tpsmin = EEPROM.read(0);
+  tpsmax = EEPROM.read(1);
  // botao = EEPROM.read(2);
  // digital = EEPROM.read(3);
  // variable = EEPROM.read(4);
