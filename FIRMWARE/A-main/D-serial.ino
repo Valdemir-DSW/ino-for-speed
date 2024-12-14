@@ -1,4 +1,4 @@
-
+int currentRow = 0;
 void serialreceiver() {
   
   // Verifica se há dados disponíveis na porta serial
@@ -13,7 +13,7 @@ void serialreceiver() {
         switch (Serial.read()) {
           case 'B':
             tpsmin = analogRead(APtps);
-            error = 0 ;
+          
             saveToEEPROM();
             break;
           case 'C':
@@ -25,12 +25,36 @@ void serialreceiver() {
         }
         break;
       case 'B':
-        // Lê o número após 'B' e configura a variável 'b'
-        if (Serial.available() >= 2) { // Certifica-se de que há pelo menos dois caracteres disponíveis
-         // Sensibilidade = Serial.parseInt(); // Lê o número e armazena em 'b'
-         // b = constrain(b, 0, 1023); // Garante que o valor esteja dentro do intervalo desejado
-          saveToEEPROM();
+          switch (Serial.read()) {
+          case 'A':
+                     // Sensibilidade = Serial.parseInt(); // Lê o número e armazena em 'b'
+                   // b = constrain(b, 0, 1023); // Garante que o valor esteja dentro do intervalo desejado
+                      String line = Serial.readStringUntil('\n');
+                        line.trim();
+                        if (line == "START") {
+                          currentRow = 0;
+                        } else if (line == "END") {
+                          //Serial.println("Data reception completed");
+                          // Opcional: Processar ou verificar os dados
+                        } else if (currentRow < 20) {
+                          int colIndex = 0;
+                          char *token = strtok(const_cast<char *>(line.c_str()), ",");
+                          while (token != nullptr && colIndex < 20) {
+                            //matriz_ve1[currentRow][colIndex] = atof(token);
+                            token = strtok(nullptr, ",");
+                            colIndex++;
+                          }
+                          currentRow++;
+                        }
+                    saveToEEPROM();
+                  
+            break;
+        
+          default:
+          
+            break;
         }
+         
         break;
       case 'C':
        // botao = 1;
@@ -64,7 +88,8 @@ output = String(mapValue) + "," +
                   String(lambdaAFR) + "," + 
                   String(dutyCycle) + "," + 
                   String(batteryVoltage) + "," + 
-                  String(error);
+                  String(error)+ "," + 
+                  String(att_rpm);
 
   Serial.println(output);
   

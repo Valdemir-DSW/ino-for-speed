@@ -1,57 +1,84 @@
+volatile unsigned long lastToothTime = 0; 
+volatile unsigned long revolutionStartTime = 0;  
+volatile int toothCount = 0;                
+volatile bool hasSync = false;                 
 
-volatile int pulseCount = 0;
-unsigned long lastPulseTime = 0;  // Tempo do último pulso
-unsigned long currentTime = 0;  // Tempo atual
-unsigned long interval = 0;  // Intervalo entre os pulsos
-unsigned long referenceIntervalThreshold = 1000;  // Threshold para identificar o ponto de referência (em microssegundos)
+volatile float rpm = 0.0;                         
+volatile float crankAngle = 0.0;               
 
 
-const int effectiveTeeth = totalTeeth - missingTeeth;  // Dentes efetivos para contagem de pulsos
-bool referenceDetected = false;  // Flag para verificar se o ponto de referência foi detectado
 
-void setup_fon(){
-
-  pinMode(sensorPin, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(sensorPin), countPulse, RISING); 
+void setup_fon() {
+  //pinMode(sensorPin_fonica, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(sensorPin_fonica), handleToothSignal, RISING);
 }
 
-void loop_fon(){
+void loop_fon() {
+  noInterrupts();
+  bool synced = hasSync;
+  interrupts();
+
+  att_rpm = rpm;
+  motor_pos = crankAngle;
+}
+
+void handleToothSignal() {
+  unsigned long currentToothTime = micros();
+  unsigned long deltaTime = currentToothTime - lastToothTime;
+
+  static float averageToothTime = 0.0;            
+  static int intervalCount = 0;                 
+  static bool isInGap = false;                   
+
+  if (!hasSync) {
+    // Modo de sincronização inicial
+    averageToothTime = (averageToothTime * intervalCount + deltaTime) / (intervalCount + 1);
+    intervalCount++;
+
+    if (deltaTime > averageToothTime * 1.8) {    
+      hasSync = true;
+      revolutionStartTime = currentToothTime;
+      toothCount = 0;
+      crankAngle = 0.0;                         
+      isInGap = false;                           
+    }
+  } else {
  
- currentTime = millis();
-  
-  // Calcule o RPM a cada 1 segundo
-  if (currentTime - lastPulseTime >= 1000) {  // Corrigido: use lastPulseTime em vez de lastTime
-    att_rpm = (pulseCount * 60) / effectiveTeeth;
-    motor_pos = (pulseCount % effectiveTeeth) * (360.0 / effectiveTeeth);
+    if (deltaTime > averageToothTime * 1.8) {
+      // Detecta a falha novamente
+      crankAngle = 0.0;                     
+      toothCount = 0;                             
+      isInGap = true;                             
+    } else {
+      if (isInGap) {
     
+        float anglePerTooth = 360.0 / teethCount;
+        crankAngle += anglePerTooth;             
+        if (crankAngle >= 360.0) {
+          crankAngle -= 360.0;                
+        }
+      } else {
+     
+        float anglePerTooth = 360.0 / teethCount;
+        crankAngle = (anglePerTooth * toothCount);
+      }
 
-    
-    // Reset para o próximo cálculo
-    pulseCount = 0;
-    lastPulseTime = currentTime;
-  }
-}
-void countPulse() {
-  currentTime = micros();  // Captura o tempo do pulso em microssegundos
-  interval = currentTime - lastPulseTime;  // Calcula o intervalo entre os pulsos
+     
+      toothCount++;
+      if (toothCount >= (teethCount - missingToothGap)) {
+        // Final da revolução
+        unsigned long revolutionDuration = currentToothTime - revolutionStartTime;
+        rpm = 60000000.0 / revolutionDuration;
 
-  if (interval > referenceIntervalThreshold && !referenceDetected) {
-    
-    
-    // Aqui definimos o primeiro dente após o espaço vazio como 0°
-    pulseCount = 0;  // Reset da contagem de pulsos para 0
-    referenceDetected = true;  // Marca que o ponto de referência foi detectado
-    
-    // Ajusta a posição para 0 graus (primeiro dente após o espaço vazio)
-    motor_pos = 0;
-  }
-  
-  // Se o ponto de referência já foi detectado, continuamos a contagem normalmente
-  if (referenceDetected) {
-    pulseCount++;
-    motor_pos = (pulseCount % effectiveTeeth) * (360.0 / effectiveTeeth);
+      
+        revolutionStartTime = currentToothTime;
+        toothCount = 0;
+        crankAngle = 0.0;
+        isInGap = false;                         
+      }
+    }
   }
 
-  // Atualiza o tempo do último pulso
-  lastPulseTime = currentTime;
+
+  lastToothTime = currentToothTime;
 }

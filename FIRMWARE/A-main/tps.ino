@@ -12,5 +12,5 @@ void tpshande(){
   }
 
   tpsPosition =  (signaltps - tpsmin) * (100 - 0) / (tpsmax - tpsmin) + 0;
-  
+  sensorBATT();
 }

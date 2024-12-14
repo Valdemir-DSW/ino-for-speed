@@ -3,6 +3,7 @@ float voltogemin;
 float voltogemax;
 float auxvar;
 void lambdamonit(){
+  getlambda = analogRead(APlambda);
   if (Lbanda==0){
       if (getlambda < 1) {
         getlambda = 1;

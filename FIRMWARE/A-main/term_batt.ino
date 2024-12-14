@@ -10,6 +10,7 @@ void sensorBATT(){
     error = 0;
 
   }
+  sensorTEMPagua();
 }
 float media = 0;
 
@@ -26,5 +27,5 @@ void sensorTEMPagua(){
 
   // Calcula a temperatura usando a fórmula do Beta
   coolantTemp = 1 / (log(media / Atermres) / Abeta + 1 / (Atempnominal + 273.15)) - 273.15;
-  //coolantTemp = 14;
+  verificar_inje_led();
 }

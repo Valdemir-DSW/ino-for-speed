@@ -12,17 +12,20 @@
 
 
 void loop(){
-//loop_fon();
+  
+
+//Os sensores um acaba chamando ficar sobrecarga começamos pelo sensor de map que vai avançando a chamada 
 map_sensor();
-tpshande();
-sensorBATT();
-sensorTEMPagua();
-verificar_inje_led();
-one_cil();
+//roda fonica e sensor O2 com mais prioridade 
+loop_fon();
 lambdamonit();
+//------------------------------------------------
+one_cil();
+//------------------------------------------------
   if (Serial.available() > 0) {
     serialreceiver();
   }else{
     semde_data();
   }
+//-----------------------------------------------
 }
