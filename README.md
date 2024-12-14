@@ -4,9 +4,9 @@ Sistema opensource de injeção eletrônica com arduíno mega 25 60
 
 aqui estão todos os arquivos opensource deste projeto
 
-site oficial > http://ino-for-speed.rf.gd/
+site oficial > {EM manutenção}
 
-discord ofc  > https://discord.gg/embmHDNvnC
+discord ofc  > https://discord.gg/3Vj9mFmXKU
 > termos de utilização
 
 o firmware você pode até comercializar você pode pegar modificar fazer o que quiser sem nenhum aviso prévio e até vender como seu!
