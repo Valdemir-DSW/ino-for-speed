@@ -1,5 +1,5 @@
 // Definindo as portas reais do Arduino
-#define PORTA_1 13
+#define PORTA_1 12 
 #define PORTA_2 3
 #define PORTA_3 4
 #define PORTA_4 5

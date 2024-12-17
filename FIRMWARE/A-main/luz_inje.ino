@@ -1,5 +1,5 @@
     
-    #define ledPin_injeao  12 // Pino do LED
+    #define ledPin_injeao  13 // Pino do LED
  
     
     void setup_luz_injeao() {

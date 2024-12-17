@@ -1,4 +1,5 @@
 int currentRow = 0;
+String dadosRecebidos;
 void serialreceiver() {
   
   // Verifica se há dados disponíveis na porta serial
@@ -20,13 +21,46 @@ void serialreceiver() {
              tpsmax = analogRead(APtps);
              saveToEEPROM();
             break;
+           case 'D':
+             dadosRecebidos = Serial.readStringUntil('\n');  // Leia até nova linha
+    
+
+
+          
+             sscanf(dadosRecebidos.c_str(), "%d,%d,%d,%d", &teethCount, &missingToothGap, &angulo_ps_falha, &invertRPM);
+             saveToEEPROM();
+            break;
+            case 'E':
+             dadosRecebidos = Serial.readStringUntil('\n');  // Leia até nova linha
+           
+           // sscanf(dadosRecebidos.c_str(), "%d,%d,%[^,],%[^,],%[^,],%d,%d,%[^,],%d", 
+           //    &cilindros, &tempoBico, ordemIgnicao.c_str(), evenOdd.c_str(), centelhaPerdida.c_str(), 
+            //   &cilindrada, &afr, injetor.c_str());
+
+            sscanf(dadosRecebidos.c_str(), "%d,%d",&map_zeroV, &map_cincoV);
+             saveToEEPROM();
+            break;
+            case 'F':
+             dadosRecebidos = Serial.readStringUntil('\n');  // Leia até nova linha
+           
+           
+            sscanf(dadosRecebidos.c_str(), "%d,%d", &map_zeroV, &map_cincoV);
+            
+             saveToEEPROM();
+            break;
+            case 'G':
+             reset_fact();
+            
+             saveToEEPROM();
+            break;
+            
           default:
             break;
         }
         break;
       case 'B':
           switch (Serial.read()) {
-          case 'A':
+           case 'A':
                      // Sensibilidade = Serial.parseInt(); // Lê o número e armazena em 'b'
                    // b = constrain(b, 0, 1023); // Garante que o valor esteja dentro do intervalo desejado
                       String line = Serial.readStringUntil('\n');
@@ -40,6 +74,7 @@ void serialreceiver() {
                           int colIndex = 0;
                           char *token = strtok(const_cast<char *>(line.c_str()), ",");
                           while (token != nullptr && colIndex < 20) {
+                             update_matriz_ve1(currentRow,colIndex,atof(token));
                             //matriz_ve1[currentRow][colIndex] = atof(token);
                             token = strtok(nullptr, ",");
                             colIndex++;
@@ -89,7 +124,7 @@ output = String(mapValue) + "," +
                   String(dutyCycle) + "," + 
                   String(batteryVoltage) + "," + 
                   String(error)+ "," + 
-                  String(att_rpm);
+                  String(att_rpm) ;
 
   Serial.println(output);
   

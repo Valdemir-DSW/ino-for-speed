@@ -20,12 +20,15 @@ map_sensor();
 loop_fon();
 lambdamonit();
 //------------------------------------------------
-one_cil();
+engine_loop();
 //------------------------------------------------
+if (Serial){
   if (Serial.available() > 0) {
     serialreceiver();
   }else{
     semde_data();
   }
+}
+
 //-----------------------------------------------
 }
