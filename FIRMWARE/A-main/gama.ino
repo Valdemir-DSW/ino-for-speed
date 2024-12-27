@@ -1,5 +1,5 @@
-float enrikegama(float carga){
+float enrikegama(float carga) {
 
   return carga;
-  
+
 }

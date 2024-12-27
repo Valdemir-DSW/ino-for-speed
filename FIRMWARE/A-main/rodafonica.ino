@@ -2,101 +2,85 @@ volatile unsigned long lastToothTime = 0;
 volatile unsigned long revolutionStartTime = 0;
 volatile int toothCount = 0;
 volatile bool hasSync = false;
-
+volatile unsigned long lastSignalTime = 0; // Marca o último momento em que houve sinal.
+const unsigned long signalTimeout = 1000000; // 1 segundo (em microssegundos)
 
 volatile float rpm = 0.0;
 volatile float crankAngle = 0.0;
 
 
-const unsigned long sensorTimeout = 1500000;  // Tempo limite para sinal do sensor (1.5s)
-float expectedAngleAfterGap = 0.0;  // Ângulo esperado após a falha
+
 
 void setup_fon() {
   attachInterrupt(digitalPinToInterrupt(sensorPin_fonica), handleToothSignal, RISING);
 }
 
 void loop_fon() {
-  unsigned long currentTime = micros();
-
- 
-
   noInterrupts();
+  unsigned long currentTime = micros();
   bool synced = hasSync;
   interrupts();
 
+  // Atualiza os valores
   att_rpm = rpm;
   motor_pos = crankAngle;
+
+  // Verifica timeout para perda de sinal
+  if ((currentTime - lastSignalTime) > signalTimeout) {
+    rpm = 0.0;      // Zera o RPM
+    hasSync = false; // Perde a sincronização
+  }
 }
+
 
 void handleToothSignal() {
   unsigned long currentToothTime = micros();
-  unsigned long deltaTime = currentToothTime - lastToothTime;
+  lastSignalTime = currentToothTime; // Atualiza o tempo do último sinal
+  
+  unsigned long deltaTime = (currentToothTime >= lastToothTime) ? 
+                            (currentToothTime - lastToothTime) : 
+                            (currentToothTime + (4294967295UL - lastToothTime));
 
-  static float averageToothTime = 0.0;  // Tempo médio entre dentes
+  static float averageToothTime = 1000.0;
   static int intervalCount = 0;
-  static bool isInGap = false;
 
-  // Se ainda não sincronizado, calcular o tempo médio entre dentes
   if (!hasSync) {
-    averageToothTime = (averageToothTime * intervalCount + deltaTime) / (intervalCount + 1);
-    intervalCount++;
+    if (deltaTime > 0 && deltaTime < 100000) {
+      averageToothTime = (averageToothTime * intervalCount + deltaTime) / (intervalCount + 1);
+      intervalCount++;
+    }
 
-    // Detectar lacuna com base na proporção do tempo
-    if (deltaTime > averageToothTime * missingToothGap) {
+    if (deltaTime > averageToothTime * missingToothGap * 1.5) {
       hasSync = true;
       revolutionStartTime = currentToothTime;
-      toothCount = 0;
+      toothCount = angulo_ps_falha;
       crankAngle = angulo_ps_falha;
       motor_pos_total = angulo_ps_falha;
-      expectedAngleAfterGap = (360.0 / teethCount) * missingToothGap;
-      isInGap = false;
     }
   } else {
-    // Verificar se o tempo atual indica uma lacuna
-    if (deltaTime > averageToothTime * missingToothGap) {
-      isInGap = true;
-
-      // Calcular o ângulo dinamicamente durante a lacuna
-      float anglePerTooth = 360.0 / teethCount;
-      crankAngle += anglePerTooth * missingToothGap;
-      if (crankAngle >= 360.0) {
-        crankAngle -= 360.0;
-      }
-
-      // Verificar se o ângulo calculado após a lacuna corresponde ao esperado
-      if (fabs(crankAngle - expectedAngleAfterGap) > 1.0) {  // Tolerância de 1 grau
-        error = 7;  // Sinalizar erro
-        hasSync = false;  // Desativar sincronização
-        return;
+    if (deltaTime > averageToothTime * missingToothGap * 1.5) {
+      toothCount += missingToothGap;
+      if (toothCount >= teethCount) {
+        toothCount -= teethCount;
+        motor_pos_total += 720.0;
       }
     } else {
-      // Atualizar o ângulo com base no tempo entre dentes
-      float anglePerMicrosecond = 360.0 / (teethCount * averageToothTime);
-      crankAngle += deltaTime * anglePerMicrosecond;
-      motor_pos_total += deltaTime * anglePerMicrosecond;
-      if (crankAngle >= 360.0) {
-        crankAngle -= 360.0;
-      }
-      if (motor_pos_total >= 720.0) {
-        motor_pos_total -= 720.0; // Manter total dentro de um ciclo de 720°
-      }
-
-      isInGap = false;
-    }
-
-    // Incrementar a contagem de dentes se não estiver na lacuna
-    if (!isInGap) {
       toothCount++;
+      if (toothCount >= teethCount) {
+        toothCount -= teethCount;
+        motor_pos_total += 720.0;
+      }
     }
 
-    // Calcular RPM no final da revolução
-    if (toothCount >= (teethCount - missingToothGap)) {
-      unsigned long revolutionDuration = currentToothTime - revolutionStartTime;
-      rpm = 60000000.0 / revolutionDuration;  // Calcular RPM em minutos
+    crankAngle = (toothCount % teethCount) * (360.0 / teethCount);
 
+    if (toothCount == 0) {
+      unsigned long revolutionDuration = (currentToothTime >= revolutionStartTime) ? 
+                                          (currentToothTime - revolutionStartTime) : 
+                                          (currentToothTime + (4294967295UL - revolutionStartTime));
+      if (revolutionDuration > 0)
+        rpm = 60000000.0 / revolutionDuration;
       revolutionStartTime = currentToothTime;
-      toothCount = 0;
-      crankAngle = 0.0;
     }
   }
 

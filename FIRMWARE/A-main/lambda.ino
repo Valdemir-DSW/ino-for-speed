@@ -13,7 +13,7 @@ void lambdamonit(){
 
       lambdaAFR =  (getlambda - 1.0f) * (2.0f- 0.0f) / (194.0f - 1.0f) + 0.0f;
     
-  }else{
+  }else if (Lbanda==1){
      voltogemin = (mvwb / 5.0) * 1023.0;
      voltogemax= (mavwb / 5.0) * 1023.0;
        if (getlambda < voltogemin) {
@@ -24,7 +24,9 @@ void lambdamonit(){
 
       auxvar =  (getlambda - voltogemin) * (malwb - mlwb) / (voltogemax - voltogemin) + mlwb;
       lambdaAFR = auxvar / 14.7;
-  } 
+  }else{
+     lambdaAFR = 1;
+  }
 
 
   

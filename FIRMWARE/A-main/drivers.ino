@@ -1,5 +1,5 @@
 // Definindo as portas reais do Arduino
-#define PORTA_1 12 
+#define PORTA_1 13
 #define PORTA_2 3
 #define PORTA_3 4
 #define PORTA_4 5
@@ -18,9 +18,9 @@ void setup_drivers() {
   pinMode(PORTA_6, OUTPUT);
   pinMode(PORTA_7, OUTPUT);
   pinMode(PORTA_8, OUTPUT);
-  
- 
- 
+
+
+
 }
 
 
